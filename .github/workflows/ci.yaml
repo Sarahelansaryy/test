@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r GitHub-action-app/requirements.txt
+          pip install -r requirements.txt
           pip install pytest pytest-cov
 
       - name: Run tests with coverage
@@ -126,7 +126,7 @@ jobs:
           else
             terraform apply -auto-approve
           fi
-        working-directory: .GitHub-action-app\Terraform
+        working-directory: ./Terraform
 
   deploy:
     needs: terraform
@@ -149,4 +149,4 @@ jobs:
         run: aws eks update-kubeconfig --name sarah-eks-cluster-45678 --region eu-central-1
 
       - name: Deploy to EKS
-        run: kubectl apply -f GitHub-action-app\k8s\deployment.yaml
+        run: kubectl apply -f k8s/deployment.yaml
