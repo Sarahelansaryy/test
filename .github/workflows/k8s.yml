@@ -1,0 +1,60 @@
+name: Deploy to eks
+on:
+  workflow_call:   #  makes this workflow reusable
+    inputs:
+      cluster:
+        description: "EKS cluster name"
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      SECRET_ACCESS_KEY:
+        required: true
+  
+  #  workflow_dispatch:
+    # push:
+    #    branches:
+    #         - feature-branch
+    #         - main
+
+jobs:
+    deploy:
+        name: deploy to EKS
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: checkout config files
+              uses: actions/checkout@v5
+
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4.3.1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
+                  aws-region: eu-central-1
+
+            - name: update kubeconfig
+              run: | 
+                    aws eks --region eu-central-1 update-kubeconfig --name sarah-eks-cluster-45678
+
+            - name: Trigger app deployment
+              uses: statsig-io/kubectl-via-eksctl@main
+              env:
+                 aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                 aws_secret_access_key: ${{ secrets.SECRET_ACCESS_KEY }}
+                 region: eu-central-1
+                 cluster: sarah-eks-cluster-45678
+
+
+            - name: Deploy k8s deployments
+              run: |
+               kubectl apply -f deployment.yaml
+               kubectl apply -f service.yaml
+              working-directory: ./kubernetes
+
+            - name: Verify Deployment
+              run: |
+                kubectl get pods  
+                kubectl get svc
